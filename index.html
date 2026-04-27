@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrainingGymAxis</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; padding: 20px; background-color: #f4f4f4; color: #333; }
+        .container { background: #fff; padding: 20px; border-radius: 12px; max-width: 450px; margin: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h2 { font-size: 18px; text-align: center; color: #00b900; border-bottom: 2px solid #00b900; padding-bottom: 10px; margin-bottom: 25px; }
+        .form-group { margin-bottom: 18px; }
+        label { display: block; font-weight: bold; margin-bottom: 6px; font-size: 14px; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; background-color: #fafafa; }
+        .btn { background-color: #00b900; color: white; border: none; padding: 18px; width: 100%; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn:disabled { background-color: #ccc !important; cursor: not-allowed; opacity: 0.6; }
+        .important-box { background: #fff0f0; padding: 15px; border-radius: 8px; border: 1px solid #ffcccc; margin-top: 20px; margin-bottom: 10px; color: #d00; font-size: 14px; font-weight: bold; line-height: 1.6; text-align: center; }
+        .error-msg { color: #d00; font-size: 12px; margin-top: 5px; display: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>【ご予約フォーム】</h2>
+    
+    <div class="form-group">
+        <label>① ご予約する店舗名</label>
+        <select id="shop" onchange="validateForm()">
+            <option value="">店舗を選択してください</option>
+            <option>飯田店</option><option>有玉店</option><option>葵東店</option>
+            <option>中条店</option><option>平口店</option><option>竜洋店</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>② ご予約日付</label>
+        <input type="date" id="date" onchange="validateForm()">
+        <p id="dateError" class="error-msg">過去の日付は選択できません</p>
+    </div>
+
+    <div class="form-group">
+        <label>③ ご予約時間（10:00～22:00）</label>
+        <input type="time" id="time" onchange="validateForm()">
+        <p id="timeError" class="error-msg">受付可能な時間外です（10:00～22:00）</p>
+    </div>
+
+    <div class="form-group">
+        <label>④ お名前</label>
+        <input type="text" id="name" placeholder="氏名を入力" oninput="validateForm()">
+    </div>
+
+    <div class="form-group">
+        <label>⑤ 年齢</label>
+        <input type="number" id="age" placeholder="年齢を入力（数字のみ）" oninput="validateForm()">
+    </div>
+
+    <div class="form-group">
+        <label>⑥ トレーニング歴</label>
+        <input type="text" id="history" placeholder="例：なし、ジム1年など" oninput="validateForm()">
+    </div>
+
+    <div class="form-group">
+        <label>⑦ 携帯電話番号</label>
+        <input type="tel" id="tel" placeholder="ハイフンなし" oninput="validateForm()">
+        <p id="telError" class="error-msg">有効な11桁の携帯番号を入力してください</p>
+    </div>
+
+    <div class="form-group">
+        <label>⑧ ご予約は本人ですか？</label>
+        <select id="isSelf" onchange="validateForm()">
+            <option value="">選択してください</option>
+            <option value="yes">はい</option>
+            <option value="no">いいえ</option>
+        </select>
+        <p id="selfError" class="error-msg">本人以外のご予約は受付できません</p>
+    </div>
+
+    <div class="form-group">
+        <label>⑨ 公式HPの内容を理解されていますか？</label>
+        <select id="isUnderstand" onchange="validateForm()">
+            <option value="">選択してください</option>
+            <option value="yes">はい</option>
+            <option value="no">いいえ</option>
+        </select>
+        <p id="understandError" class="error-msg">当店の内容を理解されていない場合は受付できません</p>
+    </div>
+
+    <div class="form-group">
+        <label>⑩ 健康上の問題はありませんか？</label>
+        <select id="isHealthy" onchange="validateForm()">
+            <option value="">選択してください</option>
+            <option value="yes">問題ありません</option>
+            <option value="no">問題あります</option>
+        </select>
+        <p id="healthError" class="error-msg">健康上の問題がある方は、別途相談が必要です</p>
+    </div>
+
+    <div class="important-box">
+        【重要】まだご予約は確定しておりません。<br>
+        確定後に必要な持ち物等が送られてきます。<br>
+        必ずご確認ください。
+    </div>
+    
+    <button id="submitBtn" class="btn" onclick="sendData()" disabled>内容を確認して送信</button>
+</div>
+
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script>
+    const LIFF_ID = "2009898612-8KMHBJAg"; 
+
+    liff.init({ liffId: LIFF_ID }).then(() => {
+        if (!liff.isLoggedIn()) { liff.login(); }
+        validateForm(); 
+    }).catch((err) => { console.error(err); });
+
+    function validateForm() {
+        const shop = document.getElementById('shop').value;
+        const dateVal = document.getElementById('date').value;
+        const timeVal = document.getElementById('time').value;
+        const name = document.getElementById('name').value.trim();
+        const age = document.getElementById('age').value.trim();
+        const history = document.getElementById('history').value.trim();
+        const tel = document.getElementById('tel').value.trim();
+        const isSelf = document.getElementById('isSelf').value;
+        const isUnderstand = document.getElementById('isUnderstand').value;
+        const isHealthy = document.getElementById('isHealthy').value;
+        
+        const submitBtn = document.getElementById('submitBtn');
+        let isValid = true;
+
+        // 日付チェック
+        if (dateVal) {
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            if (new Date(dateVal) < today) {
+                document.getElementById('dateError').style.display = 'block';
+                isValid = false;
+            } else { document.getElementById('dateError').style.display = 'none'; }
+        }
+
+        // 時間チェック (10:00-22:00)
+        if (timeVal) {
+            const hour = parseInt(timeVal.split(':')[0]);
+            if (hour < 10 || hour >= 22) {
+                document.getElementById('timeError').style.display = 'block';
+                isValid = false;
+            } else { document.getElementById('timeError').style.display = 'none'; }
+        }
+
+        // 電話番号チェック
+        if (tel && !/^0[789]0\d{8}$/.test(tel.replace(/-/g, ""))) {
+            document.getElementById('telError').style.display = 'block';
+            isValid = false;
+        } else { document.getElementById('telError').style.display = 'none'; }
+
+        // 選択肢チェック
+        if (isSelf === 'no') { document.getElementById('selfError').style.display = 'block'; isValid = false; }
+        else { document.getElementById('selfError').style.display = 'none'; }
+
+        if (isUnderstand === 'no') { document.getElementById('understandError').style.display = 'block'; isValid = false; }
+        else { document.getElementById('understandError').style.display = 'none'; }
+
+        if (isHealthy === 'no') { document.getElementById('healthError').style.display = 'block'; isValid = false; }
+        else { document.getElementById('healthError').style.display = 'none'; }
+
+        // 必須入力チェック
+        if (!shop || !dateVal || !timeVal || !name || !age || !history || !tel || 
+            isSelf !== 'yes' || isUnderstand !== 'yes' || isHealthy !== 'yes') {
+            isValid = false;
+        }
+
+        submitBtn.disabled = !isValid;
+    }
+
+    function sendData() {
+        // キーワード応答のトリガー
+        const msg = "【AXIS-FORM-COMPLETED】\n" +
+            "■店舗：" + document.getElementById('shop').value + "\n" +
+            "■日時：" + document.getElementById('date').value + " " + document.getElementById('time').value + "\n" +
+            "■名前：" + document.getElementById('name').value + "様\n" +
+            "■電話：" + document.getElementById('tel').value;
+
+        liff.sendMessages([{ type: 'text', text: msg }]).then(() => {
+            liff.closeWindow();
+        }).catch((err) => { alert("送信に失敗しました"); });
+    }
+</script>
+</body>
+</html>
