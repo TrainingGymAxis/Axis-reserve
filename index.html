@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reservations</title>
+    <title>TrainingGymAxis ご予約</title>
     <style>
         body { font-family: -apple-system, sans-serif; padding: 20px; background-color: #f4f4f4; color: #333; line-height: 1.6; }
         .container { background: #fff; padding: 25px 20px; border-radius: 15px; max-width: 450px; margin: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
@@ -13,7 +13,6 @@
         label { display: block; font-weight: bold; margin-bottom: 6px; font-size: 14px; text-align: left; }
         input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; background-color: #fafafa; }
         
-        /* エラーメッセージ（赤字・下出し） */
         .error-msg { color: #d00; font-size: 12px; margin-top: 5px; display: none; font-weight: bold; text-align: left; }
         
         .important-box { background: #fff0f0; padding: 15px; border-radius: 10px; border: 1px solid #ffcccc; margin-top: 20px; margin-bottom: 10px; color: #d00; font-size: 13px; font-weight: bold; line-height: 1.6; text-align: center; }
@@ -78,6 +77,7 @@
             <option value="yes">はい</option>
             <option value="no">いいえ</option>
         </select>
+        <p id="selfError" class="error-msg">本人以外はご予約できません</p>
     </div>
 
     <div class="form-group">
@@ -87,6 +87,7 @@
             <option value="yes">はい</option>
             <option value="no">いいえ</option>
         </select>
+        <p id="understandError" class="error-msg">HPにてまずご確認ください</p>
     </div>
 
     <div class="form-group">
@@ -96,6 +97,7 @@
             <option value="yes">問題ありません</option>
             <option value="no">問題あります</option>
         </select>
+        <p id="healthError" class="error-msg">健康に問題がある場合ご相談ください</p>
     </div>
 
     <div class="important-box">
@@ -116,6 +118,7 @@
     }).catch((err) => { console.error(err); });
 
     function validateForm() {
+        // すべての要素を取得
         const shop = document.getElementById('shop').value;
         const dateVal = document.getElementById('date').value;
         const timeVal = document.getElementById('time').value;
@@ -134,7 +137,7 @@
         const today = new Date();
         today.setHours(0,0,0,0);
 
-        // 1. 日付チェック（過去）
+        // ① 日付チェック
         if (dateVal) {
             const selectedDate = new Date(dateVal);
             if (selectedDate < today) {
@@ -145,7 +148,7 @@
             }
         }
 
-        // 2. 時間チェック（10:00-22:00 & 2時間後ルール）
+        // ② 時間チェック (10:00-22:00 & 2時間制限)
         document.getElementById('timeError').style.display = 'none';
         document.getElementById('leadTimeError').style.display = 'none';
         if (dateVal && timeVal) {
@@ -154,9 +157,8 @@
                 document.getElementById('timeError').style.display = 'block';
                 isValid = false;
             }
-            const selectedDateStr = dateVal;
             const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
-            if (selectedDateStr === todayStr) {
+            if (dateVal === todayStr) {
                 const limitTime = new Date(now.getTime() + (2 * 60 * 60 * 1000));
                 const selectedDateTime = new Date(dateVal + 'T' + timeVal);
                 if (selectedDateTime < limitTime) {
@@ -166,19 +168,15 @@
             }
         }
 
-        // 3. 年齢チェック（15歳以下はお断り）
-        if (age !== "") {
-            if (parseInt(age) <= 15) {
-                document.getElementById('ageError').style.display = 'block';
-                isValid = false;
-            } else {
-                document.getElementById('ageError').style.display = 'none';
-            }
+        // ③ 年齢チェック
+        if (age !== "" && parseInt(age) <= 15) {
+            document.getElementById('ageError').style.display = 'block';
+            isValid = false;
         } else {
             document.getElementById('ageError').style.display = 'none';
         }
 
-        // 4. 電話番号チェック
+        // ④ 電話番号チェック
         if (tel && !/^0[789]0\d{8}$/.test(tel.replace(/-/g, ""))) {
             document.getElementById('telError').style.display = 'block';
             isValid = false;
@@ -186,7 +184,17 @@
             document.getElementById('telError').style.display = 'none';
         }
 
-        // 5. 必須項目・選択肢チェック
+        // ⑤ 選択肢エラー表示
+        if (isSelf === 'no') { document.getElementById('selfError').style.display = 'block'; isValid = false; }
+        else { document.getElementById('selfError').style.display = 'none'; }
+
+        if (isUnderstand === 'no') { document.getElementById('understandError').style.display = 'block'; isValid = false; }
+        else { document.getElementById('understandError').style.display = 'none'; }
+
+        if (isHealthy === 'no') { document.getElementById('healthError').style.display = 'block'; isValid = false; }
+        else { document.getElementById('healthError').style.display = 'none'; }
+
+        // 最終バリデーション
         if (!shop || !dateVal || !timeVal || !name || !age || !history || !tel || 
             isSelf !== 'yes' || isUnderstand !== 'yes' || isHealthy !== 'yes') {
             isValid = false;
