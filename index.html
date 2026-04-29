@@ -14,6 +14,7 @@
         input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; background-color: #fafafa; }
         
         .error-msg { color: #d00; font-size: 12px; margin-top: 5px; display: none; font-weight: bold; text-align: left; }
+        .notice-msg { color: #00b900; font-size: 12px; margin-top: 5px; display: none; font-weight: bold; text-align: left; } /* 緑色のメッセージ用に追加 */
         
         .important-box { background: #fff0f0; padding: 15px; border-radius: 10px; border: 1px solid #ffcccc; margin-top: 20px; margin-bottom: 10px; color: #d00; font-size: 13px; font-weight: bold; line-height: 1.6; text-align: center; }
         
@@ -55,8 +56,18 @@
 
     <div class="form-group">
         <label>⑤ 年齢</label>
-        <input type="number" id="age" placeholder="年齢を入力" oninput="validateForm()">
-        <p id="ageError" class="error-msg">高校生以下の受付はできません</p>
+        <select id="age" onchange="validateForm()">
+            <option value="">選択してください</option>
+            <option value="10代">10代</option>
+            <option value="20代">20代</option>
+            <option value="30代">30代</option>
+            <option value="40代">40代</option>
+            <option value="50代">50代</option>
+            <option value="60代">60代</option>
+            <option value="70以上">70以上</option>
+        </select>
+        <p id="ageNotice10" class="notice-msg">高校生以上で入会可能です</p>
+        <p id="ageNotice70" class="notice-msg">持病が無い方に限ります</p>
     </div>
 
     <div class="form-group">
@@ -123,7 +134,7 @@
         const dateVal = document.getElementById('date').value;
         const timeVal = document.getElementById('time').value;
         const name = document.getElementById('name').value.trim();
-        const age = document.getElementById('age').value.trim();
+        const age = document.getElementById('age').value;
         const history = document.getElementById('history').value.trim();
         const tel = document.getElementById('tel').value.trim();
         const isSelf = document.getElementById('isSelf').value;
@@ -168,12 +179,17 @@
             }
         }
 
-        // ③ 年齢チェック
-        if (age !== "" && parseInt(age) <= 15) {
-            document.getElementById('ageError').style.display = 'block';
-            isValid = false;
+        // ③ 年齢チェック（緑色のメッセージ表示のみで送信はブロックしない）
+        if (age === "10代") {
+            document.getElementById('ageNotice10').style.display = 'block';
         } else {
-            document.getElementById('ageError').style.display = 'none';
+            document.getElementById('ageNotice10').style.display = 'none';
+        }
+        
+        if (age === "70以上") {
+            document.getElementById('ageNotice70').style.display = 'block';
+        } else {
+            document.getElementById('ageNotice70').style.display = 'none';
         }
 
         // ④ 電話番号チェック
@@ -204,15 +220,14 @@
     }
 
     function sendData() {
-        const msg = "【入会予約】\n" +
-            "■店舗：" + document.getElementById('shop').value + "\n" +
-            "■日時：" + document.getElementById('date').value + " " + document.getElementById('time').value + "\n" +
-            "■名前：" + document.getElementById('name').value + "様\n" +
-            "■年齢：" + document.getElementById('age').value + "歳\n" +
-            "■経験：" + document.getElementById('history').value + "\n" + // ← この1行を追加
-            "■電話：" + document.getElementById('tel').value;
+        const msg = "【入会予約】\n" +
+            "■店舗：" + document.getElementById('shop').value + "\n" +
+            "■日時：" + document.getElementById('date').value + " " + document.getElementById('time').value + "\n" +
+            "■名前：" + document.getElementById('name').value + "様\n" +
+            "■年齢：" + document.getElementById('age').value + "\n" +
+            "■経験：" + document.getElementById('history').value + "\n" +
+            "■電話：" + document.getElementById('tel').value;
 
-// ...後略...
         liff.sendMessages([{ type: 'text', text: msg }]).then(() => {
             liff.closeWindow();
         }).catch((err) => { alert("送信失敗"); });
