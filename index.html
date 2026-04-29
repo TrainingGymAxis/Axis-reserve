@@ -66,7 +66,7 @@
             <option value="60代">60代</option>
             <option value="70以上">70以上</option>
         </select>
-        <p id="ageNotice10" class="notice-msg">高校生以上で入会可能です</p>
+        <p id="ageNotice10" class="notice-msg">高校生以上の方に限ります</p>
         <p id="ageNotice70" class="notice-msg">持病が無い方に限ります</p>
     </div>
 
@@ -225,7 +225,7 @@
             "■日時：" + document.getElementById('date').value + " " + document.getElementById('time').value + "\n" +
             "■名前：" + document.getElementById('name').value + "様\n" +
             "■年齢：" + document.getElementById('age').value + "\n" +
-            "■経験：" + document.getElementById('history').value + "\n" +
+            "■ﾄﾚ歴：" + document.getElementById('history').value + "\n" +
             "■電話：" + document.getElementById('tel').value;
 
         liff.sendMessages([{ type: 'text', text: msg }]).then(() => {
