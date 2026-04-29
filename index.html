@@ -204,13 +204,15 @@
     }
 
     function sendData() {
-        const msg = "【入会予約】\n" +
-            "■店舗：" + document.getElementById('shop').value + "\n" +
-            "■日時：" + document.getElementById('date').value + " " + document.getElementById('time').value + "\n" +
-            "■名前：" + document.getElementById('name').value + "様\n" +
-            "■年齢：" + document.getElementById('age').value + "歳\n" +
-            "■電話：" + document.getElementById('tel').value;
+        const msg = "【入会予約】\n" +
+            "■店舗：" + document.getElementById('shop').value + "\n" +
+            "■日時：" + document.getElementById('date').value + " " + document.getElementById('time').value + "\n" +
+            "■名前：" + document.getElementById('name').value + "様\n" +
+            "■年齢：" + document.getElementById('age').value + "歳\n" +
+            "■経験：" + document.getElementById('history').value + "\n" + // ← この1行を追加
+            "■電話：" + document.getElementById('tel').value;
 
+// ...後略...
         liff.sendMessages([{ type: 'text', text: msg }]).then(() => {
             liff.closeWindow();
         }).catch((err) => { alert("送信失敗"); });
