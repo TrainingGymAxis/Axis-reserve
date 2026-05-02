@@ -14,7 +14,7 @@
         input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; background-color: #fafafa; }
         
         .error-msg { color: #d00; font-size: 12px; margin-top: 5px; display: none; font-weight: bold; text-align: left; }
-        .notice-msg { color: #00b900; font-size: 12px; margin-top: 5px; display: none; font-weight: bold; text-align: left; } /* 緑色のメッセージ用に追加 */
+        .notice-msg { color: #00b900; font-size: 12px; margin-top: 5px; display: none; font-weight: bold; text-align: left; }
         
         .important-box { background: #fff0f0; padding: 15px; border-radius: 10px; border: 1px solid #ffcccc; margin-top: 20px; margin-bottom: 10px; color: #d00; font-size: 13px; font-weight: bold; line-height: 1.6; text-align: center; }
         
@@ -77,7 +77,7 @@
 
     <div class="form-group">
         <label>⑦ 携帯電話番号</label>
-        <input type="tel" id="tel" placeholder="ハイフンなし" oninput="validateForm()">
+        <input type="tel" id="tel" placeholder="ハイフンなし" oninput="validateForm()" onblur="handleTelBlur()">
         <p id="telError" class="error-msg">有効な11桁の携帯番号を入力してください</p>
     </div>
 
@@ -122,14 +122,20 @@
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
     const LIFF_ID = "2009898612-8KMHBJAg"; 
+    let telTouched = false; // 電話番号フィールドから一度でも離れたかどうかのフラグ
 
     liff.init({ liffId: LIFF_ID }).then(() => {
         if (!liff.isLoggedIn()) { liff.login(); }
         validateForm(); 
     }).catch((err) => { console.error(err); });
 
+    // 電話番号フィールドから離れた時に実行
+    function handleTelBlur() {
+        telTouched = true;
+        validateForm();
+    }
+
     function validateForm() {
-        // すべての要素を取得
         const shop = document.getElementById('shop').value;
         const dateVal = document.getElementById('date').value;
         const timeVal = document.getElementById('time').value;
@@ -159,7 +165,7 @@
             }
         }
 
-        // ② 時間チェック (10:00-22:00 & 2時間制限)
+        // ② 時間チェック (10:00-22:00 & 4時間制限)
         document.getElementById('timeError').style.display = 'none';
         document.getElementById('leadTimeError').style.display = 'none';
         if (dateVal && timeVal) {
@@ -170,7 +176,7 @@
             }
             const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
             if (dateVal === todayStr) {
-                const limitTime = new Date(now.getTime() + (2 * 60 * 60 * 1000));
+                const limitTime = new Date(now.getTime() + (4 * 60 * 60 * 1000));
                 const selectedDateTime = new Date(dateVal + 'T' + timeVal);
                 if (selectedDateTime < limitTime) {
                     document.getElementById('leadTimeError').style.display = 'block';
@@ -179,7 +185,7 @@
             }
         }
 
-        // ③ 年齢チェック（緑色のメッセージ表示のみで送信はブロックしない）
+        // ③ 年齢チェック
         if (age === "10代") {
             document.getElementById('ageNotice10').style.display = 'block';
         } else {
@@ -193,8 +199,14 @@
         }
 
         // ④ 電話番号チェック
-        if (tel && !/^0[789]0\d{8}$/.test(tel.replace(/-/g, ""))) {
-            document.getElementById('telError').style.display = 'block';
+        const telPattern = /^0[789]0\d{8}$/;
+        const cleanTel = tel.replace(/-/g, "");
+        
+        if (tel && !telPattern.test(cleanTel)) {
+            // 入力中かつ一度も離れていない場合はエラーを出さない
+            if (telTouched) {
+                document.getElementById('telError').style.display = 'block';
+            }
             isValid = false;
         } else {
             document.getElementById('telError').style.display = 'none';
