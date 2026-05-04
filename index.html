@@ -38,15 +38,30 @@
 
     <div class="form-group">
         <label>② ご予約日付</label>
-        <input type="date" id="date" onchange="validateForm()">
-        <p id="dateError" class="error-msg">過去の日付は設定できません</p>
+        <select id="date" onchange="validateForm()">
+            <option value="">日付を選択してください</option>
+        </select>
     </div>
 
     <div class="form-group">
         <label>③ ご予約時間</label>
-        <input type="time" id="time" onchange="validateForm()">
-        <p id="timeError" class="error-msg">受付可能な時間外です（10:00～22:00）</p>
-        <p id="leadTimeError" class="error-msg">直近のご予約はスタッフ手配ができません</p>
+        <select id="time" onchange="validateForm()">
+            <option value="">時間を選択してください</option>
+            <option value="10:00">10:00</option><option value="10:30">10:30</option>
+            <option value="11:00">11:00</option><option value="11:30">11:30</option>
+            <option value="12:00">12:00</option><option value="12:30">12:30</option>
+            <option value="13:00">13:00</option><option value="13:30">13:30</option>
+            <option value="14:00">14:00</option><option value="14:30">14:30</option>
+            <option value="15:00">15:00</option><option value="15:30">15:30</option>
+            <option value="16:00">16:00</option><option value="16:30">16:30</option>
+            <option value="17:00">17:00</option><option value="17:30">17:30</option>
+            <option value="18:00">18:00</option><option value="18:30">18:30</option>
+            <option value="19:00">19:00</option><option value="19:30">19:30</option>
+            <option value="20:00">20:00</option><option value="20:30">20:30</option>
+            <option value="21:00">21:00</option><option value="21:30">21:30</option>
+            <option value="22:00">22:00</option>
+        </select>
+        <p id="leadTimeError" class="error-msg">直近のご予約はスタッフ手配ができません（4時間前まで）</p>
     </div>
 
     <div class="form-group">
@@ -122,14 +137,48 @@
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
     const LIFF_ID = "2009898612-8KMHBJAg"; 
-    let telTouched = false; // 電話番号フィールドから一度でも離れたかどうかのフラグ
+    let telTouched = false; 
 
-    liff.init({ liffId: LIFF_ID }).then(() => {
-        if (!liff.isLoggedIn()) { liff.login(); }
-        validateForm(); 
-    }).catch((err) => { console.error(err); });
+    // 日付選択肢を生成する関数
+    function populateDates() {
+        const dateSelect = document.getElementById('date');
+        if (!dateSelect) return;
+        
+        // すでに追加されている場合は二重に追加しない（念のため）
+        if (dateSelect.options.length > 1) return;
 
-    // 電話番号フィールドから離れた時に実行
+        const days = ['日', '月', '火', '水', '木', '金', '土'];
+        const now = new Date();
+
+        for (let i = 0; i < 14; i++) {
+            const d = new Date();
+            d.setDate(now.getDate() + i);
+
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const date = String(d.getDate()).padStart(2, '0');
+            const dayName = days[d.getDay()];
+
+            const val = `${year}-${month}-${date}`;
+            const text = `${month}/${date}(${dayName})`;
+            
+            const opt = document.createElement('option');
+            opt.value = val;
+            opt.textContent = i === 0 ? `今日 ${text}` : text;
+            dateSelect.appendChild(opt);
+        }
+    }
+
+    // ページ読み込み時に実行
+    document.addEventListener("DOMContentLoaded", function() {
+        populateDates();
+        
+        liff.init({ liffId: LIFF_ID }).then(() => {
+            if (!liff.isLoggedIn()) { liff.login(); }
+            validateForm(); 
+        }).catch((err) => { console.error(err); });
+    });
+
     function handleTelBlur() {
         telTouched = true;
         validateForm();
@@ -151,29 +200,10 @@
         let isValid = true;
 
         const now = new Date();
-        const today = new Date();
-        today.setHours(0,0,0,0);
 
-        // ① 日付チェック
-        if (dateVal) {
-            const selectedDate = new Date(dateVal);
-            if (selectedDate < today) {
-                document.getElementById('dateError').style.display = 'block';
-                isValid = false;
-            } else {
-                document.getElementById('dateError').style.display = 'none';
-            }
-        }
-
-        // ② 時間チェック (10:00-22:00 & 4時間制限)
-        document.getElementById('timeError').style.display = 'none';
+        // 当日4時間前チェック
         document.getElementById('leadTimeError').style.display = 'none';
         if (dateVal && timeVal) {
-            const hour = parseInt(timeVal.split(':')[0]);
-            if (hour < 10 || hour >= 22) {
-                document.getElementById('timeError').style.display = 'block';
-                isValid = false;
-            }
             const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
             if (dateVal === todayStr) {
                 const limitTime = new Date(now.getTime() + (4 * 60 * 60 * 1000));
@@ -185,44 +215,26 @@
             }
         }
 
-        // ③ 年齢チェック
-        if (age === "10代") {
-            document.getElementById('ageNotice10').style.display = 'block';
-        } else {
-            document.getElementById('ageNotice10').style.display = 'none';
-        }
-        
-        if (age === "70以上") {
-            document.getElementById('ageNotice70').style.display = 'block';
-        } else {
-            document.getElementById('ageNotice70').style.display = 'none';
-        }
+        // 年齢チェック
+        document.getElementById('ageNotice10').style.display = (age === "10代") ? 'block' : 'none';
+        document.getElementById('ageNotice70').style.display = (age === "70以上") ? 'block' : 'none';
 
-        // ④ 電話番号チェック
+        // 電話番号
         const telPattern = /^0[789]0\d{8}$/;
         const cleanTel = tel.replace(/-/g, "");
-        
         if (tel && !telPattern.test(cleanTel)) {
-            // 入力中かつ一度も離れていない場合はエラーを出さない
-            if (telTouched) {
-                document.getElementById('telError').style.display = 'block';
-            }
+            if (telTouched) document.getElementById('telError').style.display = 'block';
             isValid = false;
         } else {
             document.getElementById('telError').style.display = 'none';
         }
 
-        // ⑤ 選択肢エラー表示
-        if (isSelf === 'no') { document.getElementById('selfError').style.display = 'block'; isValid = false; }
-        else { document.getElementById('selfError').style.display = 'none'; }
+        // 各種同意
+        if (isSelf === 'no') { isValid = false; document.getElementById('selfError').style.display = 'block'; } else { document.getElementById('selfError').style.display = 'none'; }
+        if (isUnderstand === 'no') { isValid = false; document.getElementById('understandError').style.display = 'block'; } else { document.getElementById('understandError').style.display = 'none'; }
+        if (isHealthy === 'no') { isValid = false; document.getElementById('healthError').style.display = 'block'; } else { document.getElementById('healthError').style.display = 'none'; }
 
-        if (isUnderstand === 'no') { document.getElementById('understandError').style.display = 'block'; isValid = false; }
-        else { document.getElementById('understandError').style.display = 'none'; }
-
-        if (isHealthy === 'no') { document.getElementById('healthError').style.display = 'block'; isValid = false; }
-        else { document.getElementById('healthError').style.display = 'none'; }
-
-        // 最終バリデーション
+        // 必須入力確認
         if (!shop || !dateVal || !timeVal || !name || !age || !history || !tel || 
             isSelf !== 'yes' || isUnderstand !== 'yes' || isHealthy !== 'yes') {
             isValid = false;
