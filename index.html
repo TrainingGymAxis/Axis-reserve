@@ -13,6 +13,9 @@
         label { display: block; font-weight: bold; margin-bottom: 6px; font-size: 14px; text-align: left; }
         input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; background-color: #fafafa; }
         
+        /* 無効化された選択肢を目立たなくする */
+        option:disabled { color: #ccc; }
+
         .error-msg { color: #d00; font-size: 12px; margin-top: 5px; display: none; font-weight: bold; text-align: left; }
         .notice-msg { color: #00b900; font-size: 12px; margin-top: 5px; display: none; font-weight: bold; text-align: left; }
         
@@ -38,7 +41,7 @@
 
     <div class="form-group">
         <label>② ご予約日付</label>
-        <select id="date" onchange="validateForm()">
+        <select id="date" onchange="updateTimeOptions(); validateForm();">
             <option value="">日付を選択してください</option>
         </select>
     </div>
@@ -61,6 +64,7 @@
             <option value="21:00">21:00</option><option value="21:30">21:30</option>
             <option value="22:00">22:00</option>
         </select>
+        <p id="pastTimeError" class="error-msg">選択された時間は既に過ぎています</p>
         <p id="leadTimeError" class="error-msg">直近のご予約はスタッフ手配ができません（4時間前まで）</p>
     </div>
 
@@ -68,60 +72,42 @@
         <label>④ お名前</label>
         <input type="text" id="name" placeholder="氏名を入力" oninput="validateForm()">
     </div>
-
     <div class="form-group">
         <label>⑤ 年齢</label>
         <select id="age" onchange="validateForm()">
             <option value="">選択してください</option>
-            <option value="10代">10代</option>
-            <option value="20代">20代</option>
-            <option value="30代">30代</option>
-            <option value="40代">40代</option>
-            <option value="50代">50代</option>
-            <option value="60代">60代</option>
-            <option value="70以上">70以上</option>
+            <option value="10代">10代</option><option value="20代">20代</option><option value="30代">30代</option><option value="40代">40代</option><option value="50代">50代</option><option value="60代">60代</option><option value="70以上">70以上</option>
         </select>
         <p id="ageNotice10" class="notice-msg">高校生以上の方に限ります</p>
         <p id="ageNotice70" class="notice-msg">持病が無い方に限ります</p>
     </div>
-
     <div class="form-group">
         <label>⑥ トレーニング歴</label>
         <input type="text" id="history" placeholder="例：なし、ジム1年など" oninput="validateForm()">
     </div>
-
     <div class="form-group">
         <label>⑦ 携帯電話番号</label>
         <input type="tel" id="tel" placeholder="ハイフンなし" oninput="validateForm()" onblur="handleTelBlur()">
         <p id="telError" class="error-msg">有効な11桁の携帯番号を入力してください</p>
     </div>
-
     <div class="form-group">
         <label>⑧ ご予約は本人ですか？</label>
         <select id="isSelf" onchange="validateForm()">
-            <option value="">選択してください</option>
-            <option value="yes">はい</option>
-            <option value="no">いいえ</option>
+            <option value="">選択してください</option><option value="yes">はい</option><option value="no">いいえ</option>
         </select>
         <p id="selfError" class="error-msg">本人以外はご予約できません</p>
     </div>
-
     <div class="form-group">
         <label>⑨ 公式HPの内容を理解されていますか？</label>
         <select id="isUnderstand" onchange="validateForm()">
-            <option value="">選択してください</option>
-            <option value="yes">はい</option>
-            <option value="no">いいえ</option>
+            <option value="">選択してください</option><option value="yes">はい</option><option value="no">いいえ</option>
         </select>
         <p id="understandError" class="error-msg">HPにてまずご確認ください</p>
     </div>
-
     <div class="form-group">
         <label>⑩ 健康上の問題はありませんか？</label>
         <select id="isHealthy" onchange="validateForm()">
-            <option value="">選択してください</option>
-            <option value="yes">問題ありません</option>
-            <option value="no">問題あります</option>
+            <option value="">選択してください</option><option value="yes">問題ありません</option><option value="no">問題あります</option>
         </select>
         <p id="healthError" class="error-msg">健康に問題がある場合ご相談ください</p>
     </div>
@@ -139,50 +125,70 @@
     const LIFF_ID = "2009898612-8KMHBJAg"; 
     let telTouched = false; 
 
-    // 日付選択肢を生成する関数
+    // 今日から14日分の日付を生成
     function populateDates() {
         const dateSelect = document.getElementById('date');
-        if (!dateSelect) return;
-        
-        // すでに追加されている場合は二重に追加しない（念のため）
-        if (dateSelect.options.length > 1) return;
-
+        if (!dateSelect || dateSelect.options.length > 1) return;
         const days = ['日', '月', '火', '水', '木', '金', '土'];
         const now = new Date();
-
         for (let i = 0; i < 14; i++) {
             const d = new Date();
             d.setDate(now.getDate() + i);
-
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const date = String(d.getDate()).padStart(2, '0');
-            const dayName = days[d.getDay()];
-
-            const val = `${year}-${month}-${date}`;
-            const text = `${month}/${date}(${dayName})`;
-            
+            const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            const text = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}(${days[d.getDay()]})`;
             const opt = document.createElement('option');
             opt.value = val;
-            opt.textContent = i === 0 ? `今日 ${text}` : text;
+            opt.textContent = text;
             dateSelect.appendChild(opt);
         }
     }
 
-    // ページ読み込み時に実行
+    // 日付が「今日」の場合、無効な時間をグレーアウトする
+    function updateTimeOptions() {
+        const dateVal = document.getElementById('date').value;
+        const timeSelect = document.getElementById('time');
+        const options = timeSelect.options;
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        
+        const fourHoursLater = new Date(now.getTime() + (4 * 60 * 60 * 1000));
+
+        for (let i = 1; i < options.length; i++) { // 0番目の「選択してください」は飛ばす
+            if (dateVal === todayStr) {
+                const [h, m] = options[i].value.split(':');
+                const optTime = new Date();
+                optTime.setHours(h, m, 0, 0);
+
+                if (optTime < now) {
+                    // 過去の時間
+                    options[i].disabled = true;
+                } else if (optTime < fourHoursLater) {
+                    // 4時間以内
+                    options[i].disabled = true;
+                } else {
+                    options[i].disabled = false;
+                }
+            } else {
+                // 明日以降はすべて有効
+                options[i].disabled = false;
+            }
+        }
+        
+        // 現在選択中の時間が無効になった場合、リセットする
+        if (timeSelect.selectedOptions[0].disabled) {
+            timeSelect.value = "";
+        }
+    }
+
     document.addEventListener("DOMContentLoaded", function() {
         populateDates();
-        
         liff.init({ liffId: LIFF_ID }).then(() => {
             if (!liff.isLoggedIn()) { liff.login(); }
             validateForm(); 
         }).catch((err) => { console.error(err); });
     });
 
-    function handleTelBlur() {
-        telTouched = true;
-        validateForm();
-    }
+    function handleTelBlur() { telTouched = true; validateForm(); }
 
     function validateForm() {
         const shop = document.getElementById('shop').value;
@@ -200,26 +206,29 @@
         let isValid = true;
 
         const now = new Date();
-
-        // 当日4時間前チェック
+        document.getElementById('pastTimeError').style.display = 'none';
         document.getElementById('leadTimeError').style.display = 'none';
+
         if (dateVal && timeVal) {
-            const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
             if (dateVal === todayStr) {
-                const limitTime = new Date(now.getTime() + (4 * 60 * 60 * 1000));
-                const selectedDateTime = new Date(dateVal + 'T' + timeVal);
-                if (selectedDateTime < limitTime) {
+                const [h, m] = timeVal.split(':');
+                const selectedTime = new Date();
+                selectedTime.setHours(h, m, 0, 0);
+
+                if (selectedTime < now) {
+                    document.getElementById('pastTimeError').style.display = 'block';
+                    isValid = false;
+                } else if (selectedTime < new Date(now.getTime() + (4 * 60 * 60 * 1000))) {
                     document.getElementById('leadTimeError').style.display = 'block';
                     isValid = false;
                 }
             }
         }
 
-        // 年齢チェック
+        // 年齢、電話番号、同意などのチェック（前回と同様）
         document.getElementById('ageNotice10').style.display = (age === "10代") ? 'block' : 'none';
         document.getElementById('ageNotice70').style.display = (age === "70以上") ? 'block' : 'none';
-
-        // 電話番号
         const telPattern = /^0[789]0\d{8}$/;
         const cleanTel = tel.replace(/-/g, "");
         if (tel && !telPattern.test(cleanTel)) {
@@ -228,18 +237,13 @@
         } else {
             document.getElementById('telError').style.display = 'none';
         }
-
-        // 各種同意
         if (isSelf === 'no') { isValid = false; document.getElementById('selfError').style.display = 'block'; } else { document.getElementById('selfError').style.display = 'none'; }
         if (isUnderstand === 'no') { isValid = false; document.getElementById('understandError').style.display = 'block'; } else { document.getElementById('understandError').style.display = 'none'; }
         if (isHealthy === 'no') { isValid = false; document.getElementById('healthError').style.display = 'block'; } else { document.getElementById('healthError').style.display = 'none'; }
 
-        // 必須入力確認
-        if (!shop || !dateVal || !timeVal || !name || !age || !history || !tel || 
-            isSelf !== 'yes' || isUnderstand !== 'yes' || isHealthy !== 'yes') {
+        if (!shop || !dateVal || !timeVal || !name || !age || !history || !tel || isSelf !== 'yes' || isUnderstand !== 'yes' || isHealthy !== 'yes') {
             isValid = false;
         }
-
         submitBtn.disabled = !isValid;
     }
 
@@ -251,10 +255,7 @@
             "■年齢：" + document.getElementById('age').value + "\n" +
             "■ﾄﾚ歴：" + document.getElementById('history').value + "\n" +
             "■電話：" + document.getElementById('tel').value;
-
-        liff.sendMessages([{ type: 'text', text: msg }]).then(() => {
-            liff.closeWindow();
-        }).catch((err) => { alert("送信失敗"); });
+        liff.sendMessages([{ type: 'text', text: msg }]).then(() => { liff.closeWindow(); }).catch((err) => { alert("送信失敗"); });
     }
 </script>
 </body>
