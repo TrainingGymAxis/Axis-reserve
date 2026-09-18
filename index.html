@@ -125,12 +125,12 @@
         ご予約が確定すると必要な持ち物等が送られてきますので必ずご確認ください。
     </div>
     
-    <button id="submitBtn" class="btn" onclick="sendData()" disabled>内容を確認して送信</button>
+    <button id="submitBtn" class="btn" onclick="sendData()" disabled>LINEで内容を確認する</button>
+    <p style="font-size: 13px; text-align: center;">LINEのトーク画面が開きます。内容を確認し、LINE側の「送信」を押してください。</p>
 </div>
 
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
-    const LIFF_ID = "2009898612-8KMHBJAg"; 
+    const LINE_OFFICIAL_ID = "@opv5792p";
     let telTouched = false; 
 
     // 今日から14日分の日付を生成
@@ -190,10 +190,7 @@
 
     document.addEventListener("DOMContentLoaded", function() {
         populateDates();
-        liff.init({ liffId: LIFF_ID }).then(() => {
-            if (!liff.isLoggedIn()) { liff.login(); }
-            validateForm(); 
-        }).catch((err) => { console.error(err); });
+        validateForm();
     });
 
     function handleTelBlur() { telTouched = true; validateForm(); }
@@ -268,7 +265,7 @@
             "■電話：" + document.getElementById('tel').value + "\n" +
             "■備考：" + remarks; // 送信テキストの末尾に備考を追加
             
-        liff.sendMessages([{ type: 'text', text: msg }]).then(() => { liff.closeWindow(); }).catch((err) => { alert("送信失敗"); });
+        window.location.href = "https://line.me/R/oaMessage/" + encodeURIComponent(LINE_OFFICIAL_ID) + "/?" + encodeURIComponent(msg);
     }
 </script>
 </body>
