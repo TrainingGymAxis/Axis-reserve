@@ -7,13 +7,14 @@
     <style>
         /* 色は axis24/style.css の :root 実測。骨格はRunFit3本・空手2本と共通 */
         :root {
+            --accent-strong: #0f2233; /* 文字用の紺（axis24/style.css --bg-dark「濃色が要る箇所の紺（黒は使わない）」）。白地で16.2:1 */
             --accent: #1b6fb0;      /* Axisブルー濃色（サイト注記：白文字ボタン用・WCAG 4.5:1確保）。白文字で5.4:1 */
             --accent-line: #3d9be9; /* Axisブルー本体。文字には使わない（白地2.9:1）ので線にだけ当てる */
             --on-accent: #fff;
         }
         body { font-family: -apple-system, sans-serif; padding: 20px; background-color: #f4f4f4; color: #333; line-height: 1.6; }
         .container { background: #fff; padding: 25px 20px; border-radius: 15px; max-width: 450px; margin: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-        h2 { font-size: 18px; text-align: center; color: var(--accent); border-bottom: 3px solid var(--accent-line); padding-bottom: 12px; margin-bottom: 25px; margin-top: 0; }
+        h2 { font-size: 18px; text-align: center; color: var(--accent-strong); border-bottom: 3px solid var(--accent-line); padding-bottom: 12px; margin-bottom: 25px; margin-top: 0; }
         
         .form-group { margin-bottom: 18px; text-align: left; }
         label { display: block; font-weight: bold; margin-bottom: 6px; font-size: 14px; text-align: left; }
@@ -25,7 +26,7 @@
         option:disabled { color: #ccc; }
 
         .error-msg { color: #d00; font-size: 12px; margin-top: 5px; display: none; font-weight: bold; text-align: left; }
-        .notice-msg { color: var(--accent); font-size: 12px; margin-top: 5px; display: none; font-weight: bold; text-align: left; }
+        .notice-msg { color: var(--accent-strong); font-size: 12px; margin-top: 5px; display: none; font-weight: bold; text-align: left; }
         
         .important-box { background: #fff0f0; padding: 15px; border-radius: 10px; border: 1px solid #ffcccc; margin-top: 20px; margin-bottom: 10px; color: #d00; font-size: 13px; font-weight: bold; line-height: 1.6; text-align: center; }
         
